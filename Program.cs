@@ -2,6 +2,9 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Data.Common;
+using System.Net;
+using System.Runtime.Serialization;
 
 
 
@@ -9,46 +12,31 @@ namespace CatWorx.BadgeMaker
 {
   class Program
   {
-    static List<Employee> GetEmployees()
+    async static Task Main(string[] args)
     {
-       List<Employee> employees = new List<Employee>();
-      // Collect user values until the value is an empty string
-      while (true)
+      List<Employee> employees;
+      ConsoleKey response;
+      do
       {
-        Console.WriteLine("Please enter a name (leave empty to exit): ");
-
-        // Get a nem from the console and assign it to a variable
-        string input = Console.ReadLine() ?? "";
-
-        // Break if the user hits enter without typing a name
-        if (input == "")
+        Console.Write("Would you like to fetch existing employees? [y/n]");
+        response = Console.ReadKey(false).Key;
+        if (response != ConsoleKey.Enter)
         {
-          break;
+          Console.WriteLine();
         }
+      } while (response != ConsoleKey.Y && response != ConsoleKey.N);
 
-        // Create a new Employee instance
-        Employee currentEmployee = new Employee(input, "Smith");
-        employees.Add(currentEmployee);
-      }
-      return employees;
-    }
-
-    static void PrintEmployees(List<Employee> employees)
-    {
-      // Write employee list to console
-      Console.WriteLine("Employees");
-      Console.WriteLine("---------");
-      for (int i = 0; i < employees.Count; i++)
+      if (response == ConsoleKey.Y)
       {
-        Console.WriteLine(employees[i].GetFullName());
+        employees = await PeopleFetcher.GetFromApi();
+      } else
+      {
+        employees = PeopleFetcher.GetEmployees();
       }
-    }
-
-    static void Main(string[] args)
-    {
-      List<Employee> employees = GetEmployees();
-
-      PrintEmployees(employees);
+      
+      Util.PrintEmployees(employees);
+      Util.MakeCSV(employees);
+      await Util.MakeBadges(employees);
     }
   }
 }
